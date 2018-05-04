@@ -1,0 +1,2 @@
+20-Sep-2016 15:58:09	FANTASIA	Program Opened, What a BEAUTIFUL day!
+20-Sep-2016 15:58:08	SetupD	TP.D initialized
