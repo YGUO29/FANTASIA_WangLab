@@ -846,7 +846,7 @@ for k = 1:length(TP.EX.Dir.FileListT)
     % ------------------------- if file already exist -------------------------
     if exist(tiffnametemp) 
         % popout dialogut window
-        choice = questdlg(['File ', fnametemp(1:15), ' already exist, overwrite or rename?'], ...
+        choice = questdlg([fnametemp, ' already exist, overwrite or rename?'], ...
         'Duplicated file', ...
         'Overwrite','Rename','Cancel','Cancel');
         % Handle response
@@ -959,7 +959,7 @@ for k = 1:length(TP.EX.Dir.FileListT)
     toc
     
 end
-disp(['All sessions are saved!'])
+disp(['All'])
 % =================== Added by Yueqi 5/8/18 (end) ===========================
 
 
