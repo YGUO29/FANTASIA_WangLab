@@ -714,8 +714,6 @@ fnametemp = TP.EX.Dir.FileListT(TP.EX.D.CurFileNum).name;
 tiffnametemp = [TP.EX.Dir.DirSaveString,'\', fnametemp(1:15),'.tif'];
 
 % ------------------------- if file already exist -------------------------
-% dirtemp = dir(TP.EX.Dir.DirSaveString);
-% namestemp = dirtemp.name;
 if exist(tiffnametemp) 
     % popout dialogut window
     choice = questdlg('Tiff file already exist, overwrite or rename?', ...
@@ -740,15 +738,13 @@ if exist(tiffnametemp)
             return
     end
 end
-
 set(TP.EX.UI.H0.hVlmeList, 'value', 1);
 SelectVlme;
 SetupFrame; 
 
-% -------------------------------------------------------------------
-option = 3; % 1 for LibTiff, 2 for TifFantasia (fastest), 3 for saveastiff
+% ------------------- chose a tiff saving algorithm --------------
+option = 2; % 1 for LibTiff, 2 for TifFantasia (fastest), 3 for saveastiff (slowest)
 tic
-
 % ------------------- set the first frame -----------------
 if option == 1    
 % option 1: use MATLAB LibTiff 
@@ -772,24 +768,23 @@ elseif option == 2
     % ts = TifFantasia(filename, frameWidth, frameHeight, imageDescription, Property1, Value1, ...)
     % dateTimeTemp = datestr(TP.D.Trl.TimeStampStopped,'yyyy:mm:dd HH:MM:SS');
     TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D);
-    % TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653);
     appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
     
 else 
 % option 3: saveastiff.m 
     movie_temp = zeros(653,652,TP.EX.D.CurFileVlmeMax);
     movie_temp(:,:,1) = TP.D.Vol.Frame{1};
-
 end
 
 % progress bar
-% TP.EX.UI.H0.hWaitBar = waitbar(0,...
-%     ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
-%     num2str(0), ' finished.'],...
-%     'Name', ['Exporting ', fnametemp(1:16), '.rec to a tiff file']);
+TP.EX.UI.H0.hWaitBar = waitbar(0,...
+    ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
+    num2str(0), ' finished.'],...
+    'Name', ['Exporting ', fnametemp(1:16), '.rec to a tiff file']);
 
 disp('started...')
-% ------------------- set the appending frames -----------------
+
+% ------------------- set appending frames -----------------
 for i = 2:TP.EX.D.CurFileVlmeMax % start from 2nd frame
     set(TP.EX.UI.H0.hVlmeList, 'value', i);
     SelectVlme;
@@ -807,20 +802,26 @@ for i = 2:TP.EX.D.CurFileVlmeMax % start from 2nd frame
         appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
         
     else 
-    % option 3: use saveastiff.m
+    % option 3: use saveastiff.m, save all frames in a temporary matrix
     movie_temp(:,:,i) = TP.D.Vol.Frame{1};
 
     end
     
-% progress bar
-% TP.EX.UI.H0.hWaitBar = waitbar(...
-%     i/TP.EX.D.CurFileVlmeMax,...
-%     TP.EX.UI.H0.hWaitBar,...
-%     ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
-%     num2str(i), ' finished.']);
+% progress bar updated every 100 frames
+if mod(i,100) == 0
+    waitbar(...
+    i/TP.EX.D.CurFileVlmeMax,...
+    TP.EX.UI.H0.hWaitBar,...
+    ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
+    num2str(i), ' finished.']);
 end
 
-if option == 3
+end
+
+close(TP.EX.UI.H0.hWaitBar);
+disp(['file ', fnametemp(1:15),' saved!']);
+
+if option == 3 % save the whole matrix to tiff file
     res = saveastiff(uint16(movie_temp), tiffnametemp)
 else
     close(TP.EX.D.CurTiffObj)
