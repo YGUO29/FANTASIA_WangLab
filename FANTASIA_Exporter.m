@@ -5,12 +5,11 @@ function varargout = FANTASIA_Exporter(varargin)
 %   (1) The setting data saved is TP.D
 %   (2) More than that
 
-% Modified by Yueqi 10/2016
-
 %% For Standarized SubFunction Callback Control
 if nargin==0                % INITIATION
     InitializeTASKS
 elseif ischar(varargin{1})  % INVOKE NAMED SUBFUNCTION OR CALLBACK
+    
     try
         if (nargout)                        
             [varargout{1:nargout}] = feval(varargin{:});
@@ -28,11 +27,11 @@ function InitializeTASKS
 
 %% CLEAN AND RECREATE THE WORKSPACE
 clc;
-% clear all
+clear all
 global TP
 
 TP.EX.Name =            mfilename;
-TP.EX.Dir.DirString =   uigetdir('E:\User_GUO Yueqi\', 'Pick a Directory');
+TP.EX.Dir.DirString =   uigetdir('C:\=FANTASIA=Stream=', 'Pick a Directory');
 SetupD;
 SetupFigurePI;
 SetupFileVolumeLists;
@@ -44,7 +43,6 @@ set(TP.EX.UI.H.hImage_SaveVideoAVI_Momentary,	'Callback', [TP.EX.Name, '(''SaveV
 set(TP.EX.UI.H.hImage_SaveVideoMP4_Momentary,   'Callback', [TP.EX.Name, '(''SaveVideoMP4'')']);
 set(TP.EX.UI.H.hImage_SaveImageOne_Momentary,	'Callback', [TP.EX.Name, '(''SaveImageOne'')']);
 set(TP.EX.UI.H.hImage_SaveImageAll_Momentary,   'Callback', [TP.EX.Name, '(''SaveImageAll'')']);
-
 
 function SetupFigurePI
 global TP
@@ -420,40 +418,54 @@ S.PnltImage.column = 1;     S.PnltImage.row = 1;
 
                 
 function SetupFileVolumeLists 
-%% Setup the File Lists, create file handles, and call SelectFile
+%% Setup the File Lists and call SelectFile
 global TP
 
     % Setup hFileList
-    TP.EX.Dir.FileList =    dir(fullfile(TP.EX.Dir.DirString,'\*.mat'));
-    TP.EX.Dir.FileNum =     length(TP.EX.Dir.FileList);
-    fileliststring =        reshape([TP.EX.Dir.FileList.name], 19, []);
+    TP.EX.Dir.FileListR =	dir(fullfile(TP.EX.Dir.DirString,'\*.mat'));    
+    TP.EX.Dir.FileListT =	TP.EX.Dir.FileListR(2:end);
+%     TP.EX.Dir.FileNum =     length(TP.EX.Dir.FileListR);
+%     fileliststring =        reshape([TP.EX.Dir.FileListR.name], 19, []);
+    TP.EX.Dir.FileNum =     length(TP.EX.Dir.FileListT);
+    fileliststring =        reshape([TP.EX.Dir.FileListT.name], 19, []);
     fileliststring =        [fileliststring; repmat('|',1,size(fileliststring,2))];
     fileliststring =        reshape(fileliststring, 1, []);
     set(TP.EX.UI.H0.hFileList, 'string', fileliststring(1:end-1));
     
     % Setup FileHandles and FileSettings
     for i = 1:TP.EX.Dir.FileNum
-        fnametemp = TP.EX.Dir.FileList(i).name;
+        fnametemp = TP.EX.Dir.FileListT(i).name;
+        hSessMatTemp = matfile([TP.EX.Dir.DirString, '\', TP.EX.Dir.FileListR(1).name]);
         hFileMatTemp = matfile([TP.EX.Dir.DirString, '\', fnametemp]);
         TP.EX.D.File(i,1).hFileMat =    hFileMatTemp;
-        TP.EX.D.File(i,1).D =           hFileMatTemp.D; 
+        TP.EX.D.File(i,1).D =           hSessMatTemp.D; 
+        TP.EX.D.File(i,1).D.Trl =       hFileMatTemp; 
         ttemp = evalc('TP.EX.D.File(i,1).D.Ses.Scan');
         ttemp = ['Scan:' ttemp(9:end)];
-        TP.EX.D.File(i,1).SettingsMsg = ttemp;
+            TP.EX.D.File(i,1).SettingsMsg = ttemp;
         ttemp = evalc('TP.EX.D.File(i,1).D.Ses.Image');
         ttemp = ['Image:' ttemp(9:end)];
-        TP.EX.D.File(i,1).SettingsMsg = [TP.EX.D.File(i,1).SettingsMsg ttemp]; 
-        if isfield(TP.EX.D.File(i,1).D.Trl, 'SoundFname');
-            ttemp = TP.EX.D.File(i,1).D.Trl.SoundFname;
-        TP.EX.D.File(i,1).SettingsMsg = [TP.EX.D.File(i,1).SettingsMsg ttemp];      
-        end;
+            TP.EX.D.File(i,1).SettingsMsg = [TP.EX.D.File(i,1).SettingsMsg ttemp];  
+        ttemp = TP.EX.D.File(i,1).D.Trl.ScanScheme;
+        ttemp = ['Scan Scheme:', char(10), '    ', ttemp, char(10)];
+            TP.EX.D.File(i,1).SettingsMsg = [TP.EX.D.File(i,1).SettingsMsg ttemp]; 
+        ttemp = TP.EX.D.File(i,1).D.Trl.GRAB;
+        ttemp = ttemp.SoundFname;
+        tn =    35;
+        tl =    ceil(length(ttemp)/tn);
+        ttemp = [ttemp char(32*ones(1, tl*tn-length(ttemp)))];
+        ttemp = reshape(ttemp, tn, tl);
+        ttemp = [char(32*ones(4, tl)); ttemp; char(10*ones(1, tl))];
+        ttemp = reshape(ttemp, 1, []);
+        ttemp = ['Sound:', char(10), ttemp];
+            TP.EX.D.File(i,1).SettingsMsg = [TP.EX.D.File(i,1).SettingsMsg ttemp];      
         TP.EX.D.File(i,1).hFileRec = fopen([TP.EX.Dir.DirString,'\',fnametemp(1:16),'rec'],'r');
-    end;
+    end
     TP.EX.D.CurFileNum = 1;
     SelectFile;
 
 function SelectFile
-%% Setup the Selected File and according VlmeList, and call SelectVlme
+%% Setup the Selected File and according VlmeList 
 global TP
     % Different from FANTASIA('GUI_ScanParameters')
     TP.D =         TP.EX.D.File(TP.EX.D.CurFileNum).D;
@@ -500,15 +512,13 @@ global TP
     fseek(TP.EX.D.CurFileFid, ...
         (TP.EX.D.CurVlmeNum-1)*TP.D.Ses.Image.NumSmplPerVlme*2, 'bof');
      
-%     TP.D.Vol.DataColRaw = ...
-%         fread(TP.EX.D.CurFileFid, TP.D.Ses.Image.NumSmplPerVlme, 'int16');
     TP.D.Vol.DataColRaw = ...
-        fread(TP.EX.D.CurFileFid, TP.D.Ses.Image.NumSmplPerVlme, 'int16=>int16'); % 10/24/2016 - Yueqi, so that read out format is int16
-    eval(TP.D.Ses.Image.ImgFunc); % the scan mode with which this volume was obtained, e.g. 'updateImage2Draster'
+        fread(TP.EX.D.CurFileFid, TP.D.Ses.Image.NumSmplPerVlme, 'int16');
+    eval(TP.D.Ses.Image.ImgFunc);
       
     if TP.EX.D.ImageDisplayMode
         % Absolute
-        a = 1024; 
+        a = 2048; 
         b = -8;
     else
         a = max(TP.D.Vol.PixlCol);
@@ -546,32 +556,27 @@ global TP
 
 % for savint through VideoFWriter System object (2015/08/17)
 
-fnametemp = TP.EX.Dir.FileList(TP.EX.D.CurFileNum).name;
-snametemp = TP.D.Trl.SoundFname;
+fnametemp = TP.EX.Dir.FileListT(TP.EX.D.CurFileNum).name;
+snametemp = TP.D.Trl.GRAB;
+snametemp = snametemp.SoundFname;
 vnametemp = [TP.EX.Dir.DirString,'\', fnametemp(1:16), 'avi'];
-sounddata = wavread(snametemp, 'native'); 
+[sounddata, FS] = audioread(snametemp); 
 sounddatatype = whos('sounddata');
 TP.EX.D.CurVideoObj = vision.VideoFileWriter(vnametemp,...
     'FileFormat',       'AVI',...
     'AudioInputPort',   true,...
     'FrameRate',        TP.D.Ses.Scan.VolumeRate,...
-    'VideoCompressor',  'DV VIdeo Encoder',...
-    'AudioDataType',    sounddatatype.class);
+    'VideoCompressor',	'None (uncompressed)',...
+    'AudioDataType',    'int16');
 
-TP.EX.UI.H0.hWaitBar = waitbar(0,...
-    ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
-    num2str(0), ' finished.'],...
-    'Name', ['Exporting ', fnametemp(1:16), '.rec to a mp4 video file']);
 
 % TP.EX.D.CurImgStack = double(TP.D.Vol.LayerAbs{1});
-SoundNum = round(100e3/TP.D.Ses.Scan.VolumeRate);
+SoundNum = round(FS/TP.D.Ses.Scan.VolumeRate);
 % SoundSeq = zeros(444 * SoundNum,1);
 SoundSeq = zeros(TP.EX.D.CurFileVlmeMax * SoundNum,1);
-SoundSeq(1:length(sounddata)) = sounddata;
+SoundSeq(1:length(sounddata)) = sounddata * (strcmp(TP.D.Trl.ScanScheme, 'GRAB'));
 
-% for i = 705:1148
 for i = 1:TP.EX.D.CurFileVlmeMax
-
     set(TP.EX.UI.H0.hVlmeList, 'value', i);
     SelectVlme;
     
@@ -581,11 +586,8 @@ for i = 1:TP.EX.D.CurFileVlmeMax
     step(   TP.EX.D.CurVideoObj,...
             TP.D.Vol.LayerDisp{1},...
             SoundSeq((i-1)*SoundNum+1:(i-0)*SoundNum)  );
-    TP.EX.UI.H0.hWaitBar = waitbar(...
-        i/TP.EX.D.CurFileVlmeMax,...
-        TP.EX.UI.H0.hWaitBar,...
-        ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
-            num2str(i), ' finished.']);
+%     waitfor(TP.EX.UI.H0.hImage);
+    pause(0.05)
 end;
 
 % figure;
@@ -593,12 +595,12 @@ end;
 % TP.EX.D.CurImgStackD(:,:,2) = TP.EX.D.CurImgStack/max(max(TP.EX.D.CurImgStack));
 % image(TP.EX.D.CurImgStackD);
 release(TP.EX.D.CurVideoObj);
-close(TP.EX.UI.H0.hWaitBar);
+
 
 function SaveVideoMP4
 global TP
 
-fnametemp = TP.EX.Dir.FileList(TP.EX.D.CurFileNum).name;
+fnametemp = TP.EX.Dir.FileListT(TP.EX.D.CurFileNum).name;
 vnametemp = [TP.EX.Dir.DirString,'\', fnametemp(1:16), 'mp4'];
 TP.EX.D.CurVideoObj = VideoWriter(vnametemp, 'MPEG-4');
 TP.EX.D.CurVideoObj.Quality = 100;
@@ -612,7 +614,7 @@ TP.EX.UI.H0.hWaitBar = waitbar(0,...
 
 TP.EX.D.CurImgStack = double(TP.D.Vol.LayerAbs{1});
 
-for i = 1:TP.EX.D.CurFileVlmeMax % 1 to #frames
+for i = 1:TP.EX.D.CurFileVlmeMax
 
     set(TP.EX.UI.H0.hVlmeList, 'value', i);
     SelectVlme;
@@ -620,9 +622,7 @@ for i = 1:TP.EX.D.CurFileVlmeMax % 1 to #frames
 %     TP.EX.D.ImgSeqBrtns(i) = sum(sum(TP.D.Vol.LayerAbs{1}));
 %     TP.EX.D.ImgSeqLayerAbs{i} = TP.D.Vol.LayerAbs{1};
 %     TP.EX.D.CurImgStack = TP.EX.D.CurImgStack + double(TP.D.Vol.LayerAbs{1});
-
-    writeVideo(TP.EX.D.CurVideoObj, TP.D.Vol.LayerDisp{1}); % write one frame (8-bit images)- YG
-    
+    writeVideo(TP.EX.D.CurVideoObj, TP.D.Vol.LayerDisp{1});
     TP.EX.UI.H0.hWaitBar = waitbar(...
         i/TP.EX.D.CurFileVlmeMax,...
         TP.EX.UI.H0.hWaitBar,...
@@ -636,14 +636,15 @@ end;
 close(TP.EX.D.CurVideoObj);
 close(TP.EX.UI.H0.hWaitBar);
 
-
-
+% =================== Added by Yueqi 5/8/18 (start) ===========================
 function SaveImageOne
 global TP
 % ------------------- select folder for saving tiff -----------------------
-TP.EX.Dir.DirSaveString =   uigetdir('E:\User_GUO Yueqi\', 'Pick a Directory for saving Tiff files');
+TP.EX.Dir.DirSaveString =   uigetdir('D:\=data=\80Z_imaging\img_2p', 'Pick a Directory for saving Tiff files');
 % set Tiff name
-fnametemp = TP.EX.Dir.FileList(TP.EX.D.CurFileNum).name;
+% ============ TP.EX.Dir.FileList changed to TP.EX.Dir.FileListT in new 
+% version of Exporter (5/8/18) by Yueqi ====================
+fnametemp = TP.EX.Dir.FileListT(TP.EX.D.CurFileNum).name; 
 vnametemp = num2str(get(TP.EX.UI.H0.hVlmeList, 'value'));
 tiffnametemp = [TP.EX.Dir.DirSaveString,'\', fnametemp(1:15), '_', vnametemp,'.tif'];
 % ------------------------- if file already exist -------------------------
@@ -680,24 +681,24 @@ SetupFrame
 % ------------------- option 1: use MATLAB LibTiff -----------------
 option = 1; % 1 for LibTiff, 2 for TifFantasia
 if option == 1
-TP.EX.D.CurTiffObj = Tiff(tiffnametemp,'w');
-% set required tags
-tagTemp.ImageLength = 653;
-tagTemp.ImageWidth = 652;
-tagTemp.Photometric = 1;
-tagTemp.BitsPerSample = 16; % this is not true in the future
-tagTemp.SamplesPerPixel = 1; 
-tagTemp.RowsPerStrip = 16;
-tagTemp.PlanarConfiguration = 1;
-tagTemp.Software = 'FANTASIA';
-setTag(TP.EX.D.CurTiffObj,tagTemp);
-write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); % write selected frame
+    TP.EX.D.CurTiffObj = Tiff(tiffnametemp,'w');
+    % set required tags
+    tagTemp.ImageLength = 653;
+    tagTemp.ImageWidth = 652;
+    tagTemp.Photometric = 1;
+    tagTemp.BitsPerSample = 16; % this is not true in the future
+    tagTemp.SamplesPerPixel = 1; 
+    tagTemp.RowsPerStrip = 16;
+    tagTemp.PlanarConfiguration = 1;
+    tagTemp.Software = 'FANTASIA';
+    setTag(TP.EX.D.CurTiffObj,tagTemp);
+    write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); % write selected frame
 else
-% -------------------------------------------------------------------
-% dateTimeTemp = datestr(TP.D.Trl.TimeStampStopped,'yyyy:mm:dd HH:MM:SS');
-% TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D.Mky.ID,'dateTime',dateTimeTemp);
-TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D);
-appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1})
+    % -------------------------------------------------------------------
+    % dateTimeTemp = datestr(TP.D.Trl.TimeStampStopped,'yyyy:mm:dd HH:MM:SS');
+    % TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D.Mky.ID,'dateTime',dateTimeTemp);
+    TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D);
+    appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1})
 end
 close(TP.EX.D.CurTiffObj)
 
@@ -706,9 +707,10 @@ function SaveImageAll
 global TP
 
 % ------------------- select folder for saving tiff -----------------------
-TP.EX.Dir.DirSaveString =   uigetdir('E:\User_GUO Yueqi\', 'Pick a Directory for saving Tiff files');
+TP.EX.Dir.DirSaveString =   uigetdir('D:\=data=\80Z_imaging\img_2p', 'Pick a Directory for saving Tiff files');
 % set Tiff name
-fnametemp = TP.EX.Dir.FileList(TP.EX.D.CurFileNum).name;
+% TP.EX.Dir.FileList changed to TP.EX.Dir.FileListT in new version of Exporter (5/8/18) by Yueqi 
+fnametemp = TP.EX.Dir.FileListT(TP.EX.D.CurFileNum).name;
 tiffnametemp = [TP.EX.Dir.DirSaveString,'\', fnametemp(1:15),'.tif'];
 
 % ------------------------- if file already exist -------------------------
@@ -741,70 +743,92 @@ end
 
 set(TP.EX.UI.H0.hVlmeList, 'value', 1);
 SelectVlme;
-SetupFrame;
+SetupFrame; 
 
 % -------------------------------------------------------------------
-option = 2; % 1 for LibTiff, 2 for TifFantasia
+option = 3; % 1 for LibTiff, 2 for TifFantasia (fastest), 3 for saveastiff
 tic
-if option == 1    
-% ------------------- option 1: use MATLAB LibTiff -----------------
-TP.EX.D.CurTiffObj = Tiff(tiffnametemp,'w');
-% set required tags
-tagTemp.ImageLength = 653;
-tagTemp.ImageWidth = 652;
-tagTemp.Photometric = 1;
-tagTemp.BitsPerSample = 16;
-tagTemp.SamplesPerPixel = 1;
-tagTemp.RowsPerStrip = 16;
-tagTemp.PlanarConfiguration = 1;
-tagTemp.Software = 'FANTASIA';
-setTag(TP.EX.D.CurTiffObj,tagTemp);
-write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); 
-else
-% ---------- option 2: use self-defined class based on ScanImage ----
-% ts = TifFantasia(filename, frameWidth, frameHeight, imageDescription, Property1, Value1, ...)
-% dateTimeTemp = datestr(TP.D.Trl.TimeStampStopped,'yyyy:mm:dd HH:MM:SS');
-TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D);
-% TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653);
 
-appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
+% ------------------- set the first frame -----------------
+if option == 1    
+% option 1: use MATLAB LibTiff 
+
+    TP.EX.D.CurTiffObj = Tiff(tiffnametemp,'w');
+    % set required tags
+    tagTemp.ImageLength = 653;
+    tagTemp.ImageWidth = 652;
+    tagTemp.Photometric = 1;
+    tagTemp.BitsPerSample = 16;
+    tagTemp.SamplesPerPixel = 1;
+    tagTemp.RowsPerStrip = 16;
+    tagTemp.PlanarConfiguration = 1;
+    tagTemp.Software = 'FANTASIA';
+    setTag(TP.EX.D.CurTiffObj,tagTemp);
+    write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); 
+    
+elseif option == 2
+% option 2: use self-defined class based on ScanImage 
+
+    % ts = TifFantasia(filename, frameWidth, frameHeight, imageDescription, Property1, Value1, ...)
+    % dateTimeTemp = datestr(TP.D.Trl.TimeStampStopped,'yyyy:mm:dd HH:MM:SS');
+    TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D);
+    % TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653);
+    appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
+    
+else 
+% option 3: saveastiff.m 
+    movie_temp = zeros(653,652,TP.EX.D.CurFileVlmeMax);
+    movie_temp(:,:,1) = TP.D.Vol.Frame{1};
+
 end
 
 % progress bar
-TP.EX.UI.H0.hWaitBar = waitbar(0,...
-    ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
-    num2str(0), ' finished.'],...
-    'Name', ['Exporting ', fnametemp(1:16), '.rec to a tiff file']);
+% TP.EX.UI.H0.hWaitBar = waitbar(0,...
+%     ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
+%     num2str(0), ' finished.'],...
+%     'Name', ['Exporting ', fnametemp(1:16), '.rec to a tiff file']);
 
-
+disp('started...')
+% ------------------- set the appending frames -----------------
 for i = 2:TP.EX.D.CurFileVlmeMax % start from 2nd frame
     set(TP.EX.UI.H0.hVlmeList, 'value', i);
     SelectVlme;
     SetupFrame;
+    
     if option == 1
-% ------------------- option 1: use MATLAB LibTiff -----------------
-    writeDirectory(TP.EX.D.CurTiffObj);
-    setTag(TP.EX.D.CurTiffObj,tagTemp)
-    write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); 
-% ---------- option 2: use self-defined class based on ScanImage ----
-    else
-    appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
+    % option 1: use MATLAB LibTiff 
+    
+        writeDirectory(TP.EX.D.CurTiffObj);
+        setTag(TP.EX.D.CurTiffObj,tagTemp)
+        write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); 
+
+    elseif option == 2
+    % option 2: use self-defined class based on ScanImage
+        appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
+        
+    else 
+    % option 3: use saveastiff.m
+    movie_temp(:,:,i) = TP.D.Vol.Frame{1};
+
     end
     
-    % progress bar
-    TP.EX.UI.H0.hWaitBar = waitbar(...
-    i/TP.EX.D.CurFileVlmeMax,...
-    TP.EX.UI.H0.hWaitBar,...
-    ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
-            num2str(i), ' finished.']);
+% progress bar
+% TP.EX.UI.H0.hWaitBar = waitbar(...
+%     i/TP.EX.D.CurFileVlmeMax,...
+%     TP.EX.UI.H0.hWaitBar,...
+%     ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
+%     num2str(i), ' finished.']);
 end
-close(TP.EX.D.CurTiffObj)
+
+if option == 3
+    res = saveastiff(uint16(movie_temp), tiffnametemp)
+else
+    close(TP.EX.D.CurTiffObj)
+end
+    
+    
 toc
 
-
-
-
-
-
+% =================== Added by Yueqi 5/8/18 (end) ===========================
 
 

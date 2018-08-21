@@ -42,13 +42,10 @@ global TP
     end;
                     
 %% from int16 to uint16
-
-%PixlCol2 = uint16(PixlCol2 - min(PixlCol2));
-
+%      PixlCol2 = uint16(PixlCol2 - min(PixlCol2));
 % ==== 5/1/18 by Yueqi (the method above shifts each frame by different values) ====
 % PixlCol2 = uint16(double(PixlCol2) + ones(size(PixlCol2)).*2^15);
-
-% ==== 6/11/18 by Yueqi (the values smaller than -8 in PixlCol2 are not meaningful, thus can be set to zero) ====
+% ==== 6/11/18 b
 PixlCol2 = uint16(double(PixlCol2) + ones(size(PixlCol2)).*8);
 
 
