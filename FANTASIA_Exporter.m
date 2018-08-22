@@ -41,9 +41,9 @@ set(TP.EX.UI.H0.hVlmeList,                      'Callback', [TP.EX.Name, '(''Sel
 set(TP.EX.UI.H.hImage_DisplayMode_Rocker,       'SelectionChangeFcn', [TP.EX.Name, '(''SelectDisplayMode'')']);
 set(TP.EX.UI.H.hImage_SaveVideoAVI_Momentary,	'Callback', [TP.EX.Name, '(''SaveVideoAVI'')']);
 set(TP.EX.UI.H.hImage_SaveVideoMP4_Momentary,   'Callback', [TP.EX.Name, '(''SaveVideoMP4'')']);
-set(TP.EX.UI.H.hImage_SaveImageOne_Momentary,	'Callback', [TP.EX.Name, '(''SaveImageAllSession'')']);
-set(TP.EX.UI.H.hImage_SaveImageAll_Momentary,   'Callback', [TP.EX.Name, '(''SaveImageAll'')']);
-
+set(TP.EX.UI.H.hImage_SaveImageOne_Momentary,	'Callback', [TP.EX.Name, '(''SaveImageOne'')']);
+set(TP.EX.UI.H.hImage_SaveSessionOne_Momentary,   'Callback', [TP.EX.Name, '(''SaveSessionOne'')']);
+set(TP.EX.UI.H.hImage_SaveSessionAll_Momentary,   'Callback', [TP.EX.Name, '(''SaveSessionAll'')']);
 function SetupFigurePI
 global TP
 
@@ -234,6 +234,19 @@ TP.EX.UI.C =        S.Color;
         
 %% UI Panelettes   
 S.PnltImage.column = 1;     S.PnltImage.row = 1;
+
+% create MomentarySwitch panels 'Save One Image' (added by Yueqi 8/22/18)
+    WP.handleseed = 'TP.EX.UI.H0.Panelette';
+    WP.type = 'MomentarySwitch';  WP.name = 'Save One Image';
+    WP.row = S.PnltImage.row + 1; 	WP.column = S.PnltImage.column + 3;  
+    WP.text = {'Save the CURRENT image',''};
+    WP.tip = { 'Save the CURRENT image',''};
+    WP.inputEnable = {'on','on'};
+    Panelette(S, WP, 'TP');
+    TP.EX.UI.H.hImage_SaveImageOne_Momentary = TP.EX.UI.H0.Panelette{WP.row,WP.column}.hMomentary{1}; 
+%     TP.EX.UI.H.hImage_SaveImageOne_Momentary = TP.EX.UI.H0.Panelette{WP.row,WP.column}.hMomentary{2}; 
+    clear WP;
+    
 % create Edit panel 'Image Arm Pos'
     WP.handleseed = 'TP.EX.UI.H0.Panelette';
     WP.type = 'Edit';           WP.name = 'Image Arm Pos';
@@ -266,14 +279,14 @@ S.PnltImage.column = 1;     S.PnltImage.row = 1;
   
 % create MomentarySwitch panels 'Image Save'
     WP.handleseed = 'TP.EX.UI.H0.Panelette';
-    WP.type = 'MomentarySwitch';  WP.name = 'Save Image(s)';
+    WP.type = 'MomentarySwitch';  WP.name = 'Save Images';
     WP.row = S.PnltImage.row; 	WP.column = S.PnltImage.column + 2;  
-    WP.text = {'Save the CURRENT image','Save ALL images w/ movement correction'};
-    WP.tip = { 'Save the CURRENT image','Save ALL images w/ movement correction'};
+    WP.text = {'Save the CURRENT session','Save ALL sessions'};
+    WP.tip = { 'Save the CURRENT session','Save ALL sessions'};
     WP.inputEnable = {'on','on'};
     Panelette(S, WP, 'TP');
-    TP.EX.UI.H.hImage_SaveImageOne_Momentary = TP.EX.UI.H0.Panelette{WP.row,WP.column}.hMomentary{1}; 
-    TP.EX.UI.H.hImage_SaveImageAll_Momentary = TP.EX.UI.H0.Panelette{WP.row,WP.column}.hMomentary{2}; 
+    TP.EX.UI.H.hImage_SaveSessionOne_Momentary = TP.EX.UI.H0.Panelette{WP.row,WP.column}.hMomentary{1}; 
+    TP.EX.UI.H.hImage_SaveSessionAll_Momentary = TP.EX.UI.H0.Panelette{WP.row,WP.column}.hMomentary{2}; 
     clear WP;
     
 % create MomentarySwitch panels 'Video Save'
@@ -287,6 +300,8 @@ S.PnltImage.column = 1;     S.PnltImage.row = 1;
     TP.EX.UI.H.hImage_SaveVideoAVI_Momentary = TP.EX.UI.H0.Panelette{WP.row,WP.column}.hMomentary{1}; 
     TP.EX.UI.H.hImage_SaveVideoMP4_Momentary = TP.EX.UI.H0.Panelette{WP.row,WP.column}.hMomentary{2}; 
     clear WP;
+    
+    
     
 %% UI Hist Panel
     % Image Scale
@@ -679,7 +694,7 @@ SelectVlme
 SetupFrame
 
 % ------------------- option 1: use MATLAB LibTiff -----------------
-option = 1; % 1 for LibTiff, 2 for TifFantasia
+option = 2; % 1 for LibTiff, 2 for TifFantasia
 if option == 1
     TP.EX.D.CurTiffObj = Tiff(tiffnametemp,'w');
     % set required tags
@@ -701,9 +716,10 @@ else
     appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1})
 end
 close(TP.EX.D.CurTiffObj)
+disp(['file ', fnametemp(1:15), '_', vnametemp,' saved!']);
 
 
-function SaveImageAll
+function SaveSessionOne
 global TP
 
 % ------------------- select folder for saving tiff -----------------------
@@ -782,7 +798,7 @@ TP.EX.UI.H0.hWaitBar = waitbar(0,...
     num2str(0), ' finished.'],...
     'Name', ['Exporting ', fnametemp(1:16), '.rec to a tiff file']);
 
-disp('started...')
+disp(['file ', fnametemp(1:15),' started...'])
 
 % ------------------- set appending frames -----------------
 for i = 2:TP.EX.D.CurFileVlmeMax % start from 2nd frame
@@ -819,17 +835,17 @@ end
 end
 
 close(TP.EX.UI.H0.hWaitBar);
-disp(['file ', fnametemp(1:15),' saved!']);
 
 if option == 3 % save the whole matrix to tiff file
     res = saveastiff(uint16(movie_temp), tiffnametemp)
 else
     close(TP.EX.D.CurTiffObj)
 end   
+disp(['file ', fnametemp(1:15),' saved!']);
 toc
 
 
-function SaveImageAllSession
+function SaveSessionAll
 global TP
 
 % ------------------- select folder for saving tiff -----------------------
@@ -912,7 +928,7 @@ for k = 1:length(TP.EX.Dir.FileListT)
         num2str(0), ' finished.'],...
         'Name', ['Exporting ', fnametemp(1:16), '.rec to a tiff file']);
 
-    disp('started...')
+    disp(['file ', fnametemp(1:15),' started...'])
 
     % ------------------- set appending frames -----------------
     for i = 2:TP.EX.D.CurFileVlmeMax % start from 2nd frame
@@ -949,13 +965,14 @@ for k = 1:length(TP.EX.Dir.FileListT)
     end
 
     close(TP.EX.UI.H0.hWaitBar);
-    disp(['file ', fnametemp(1:15),' saved!']);
+    
 
     if option == 3 % save the whole matrix to tiff file
         res = saveastiff(uint16(movie_temp), tiffnametemp)
     else
         close(TP.EX.D.CurTiffObj)
     end   
+    disp(['file ', fnametemp(1:15),' saved!']);
     toc
     
 end
