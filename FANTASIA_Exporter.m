@@ -28,6 +28,7 @@ function InitializeTASKS
 %% CLEAN AND RECREATE THE WORKSPACE
 clc;
 clear all
+fclose('all'); % prevent fseek errors when switching files in "SelectFile" (Yueqi)
 global TP
 
 TP.EX.Name =            mfilename;
@@ -490,9 +491,9 @@ global TP
     TP.D.Ses.Image.NumPixlPerUpdt = TP.D.Ses.Scan.NumSmplPerVlme / TP.D.Ses.Scan.NumSmplPerPixl / TP.D.Ses.Image.NumUpdtPerVlme;                                    
     TP.D.Ses.Image.NumSmplPerUpdt = TP.D.Ses.Image.NumSmplPerPixl * TP.D.Ses.Image.NumPixlPerUpdt;
   	TP.D.Ses.Image.NumSmplPerVlme = TP.D.Ses.Image.NumSmplPerUpdt * TP.D.Ses.Image.NumUpdtPerVlme;
-
+    
     TP.EX.D.CurFileNum =    get(TP.EX.UI.H0.hFileList, 'value'); 
-    TP.EX.D.CurFileFid =    TP.EX.D.File(TP.EX.D.CurFileNum).hFileRec;      
+    TP.EX.D.CurFileFid =    TP.EX.D.File(TP.EX.D.CurFileNum).hFileRec;    
 
     % Setup Image Data Releted Structures
     SetupImageD;
@@ -855,7 +856,9 @@ for k = 1:length(TP.EX.Dir.FileListT)
 
     % set Tiff name
     % TP.EX.Dir.FileList changed to TP.EX.Dir.FileListT in new version of Exporter (5/8/18) by Yueqi 
-    TP.EX.D.CurFileNum = k;
+    set(TP.EX.UI.H0.hFileList, 'value', k); % iterate through different sessions
+%     TP.EX.D.CurFileNum = k;
+    SelectFile;
     fnametemp = TP.EX.Dir.FileListT(TP.EX.D.CurFileNum).name;
     tiffnametemp = [TP.EX.Dir.DirSaveString,'\', fnametemp(1:15),'.tif'];
 
@@ -884,7 +887,7 @@ for k = 1:length(TP.EX.Dir.FileListT)
                 return
         end
     end
-    set(TP.EX.UI.H0.hVlmeList, 'value', 1);
+    set(TP.EX.UI.H0.hVlmeList, 'value', 1); % start from first frame
     SelectVlme;
     SetupFrame; 
 
