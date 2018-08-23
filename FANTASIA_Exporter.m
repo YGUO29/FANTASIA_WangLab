@@ -979,7 +979,7 @@ for k = 1:length(TP.EX.Dir.FileListT)
     toc
     
 end
-disp(['All sessions are saved!'])
+disp(['========= All sessions are saved! ==========='])
 % =================== Added by Yueqi 5/8/18 (end) ===========================
 
 
