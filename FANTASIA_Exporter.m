@@ -658,14 +658,11 @@ global TP
 % ------------------- select folder for saving tiff -----------------------
 TP.EX.Dir.DirSaveString =   uigetdir('D:\=data=\80Z_imaging\img_2p', 'Pick a Directory for saving Tiff files');
 % set Tiff name
-% ============ TP.EX.Dir.FileList changed to TP.EX.Dir.FileListT in new 
-% version of Exporter (5/8/18) by Yueqi ====================
+% TP.EX.Dir.FileList changed to TP.EX.Dir.FileListT in new version of Exporter (5/8/18) by Yueqi 
 fnametemp = TP.EX.Dir.FileListT(TP.EX.D.CurFileNum).name; 
 vnametemp = num2str(get(TP.EX.UI.H0.hVlmeList, 'value'));
 tiffnametemp = [TP.EX.Dir.DirSaveString,'\', fnametemp(1:15), '_', vnametemp,'.tif'];
 % ------------------------- if file already exist -------------------------
-% dirtemp = dir(TP.EX.Dir.DirSaveString);
-% namestemp = dirtemp.name;
 if exist(tiffnametemp) 
     % popout dialogut window
     choice = questdlg('Tiff file already exist, overwrite or rename?', ...
@@ -694,9 +691,10 @@ end
 SelectVlme
 SetupFrame
 
-% ------------------- option 1: use MATLAB LibTiff -----------------
+% ------------------- chose a tiff saving algorithm -----------------
 option = 2; % 1 for LibTiff, 2 for TifFantasia
 if option == 1
+% option 1: use MATLAB LibTiff 
     TP.EX.D.CurTiffObj = Tiff(tiffnametemp,'w');
     % set required tags
     tagTemp.ImageLength = 653;
@@ -710,7 +708,7 @@ if option == 1
     setTag(TP.EX.D.CurTiffObj,tagTemp);
     write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); % write selected frame
 else
-    % -------------------------------------------------------------------
+% option 2: use self-defined class based on ScanImage 
     % dateTimeTemp = datestr(TP.D.Trl.TimeStampStopped,'yyyy:mm:dd HH:MM:SS');
     % TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D.Mky.ID,'dateTime',dateTimeTemp);
     TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D);
@@ -722,7 +720,6 @@ disp(['file ', fnametemp(1:15), '_', vnametemp,' saved!']);
 
 function SaveSessionOne
 global TP
-
 % ------------------- select folder for saving tiff -----------------------
 TP.EX.Dir.DirSaveString =   uigetdir('D:\=data=\80Z_imaging\img_2p', 'Pick a Directory for saving Tiff files');
 % set Tiff name
@@ -765,7 +762,6 @@ tic
 % ------------------- set the first frame -----------------
 if option == 1    
 % option 1: use MATLAB LibTiff 
-
     TP.EX.D.CurTiffObj = Tiff(tiffnametemp,'w');
     % set required tags
     tagTemp.ImageLength = 653;
@@ -779,18 +775,13 @@ if option == 1
     setTag(TP.EX.D.CurTiffObj,tagTemp);
     write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); 
     
-elseif option == 2
+else
 % option 2: use self-defined class based on ScanImage 
-
     % ts = TifFantasia(filename, frameWidth, frameHeight, imageDescription, Property1, Value1, ...)
     % dateTimeTemp = datestr(TP.D.Trl.TimeStampStopped,'yyyy:mm:dd HH:MM:SS');
     TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D);
     appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
     
-else 
-% option 3: saveastiff.m 
-    movie_temp = zeros(653,652,TP.EX.D.CurFileVlmeMax);
-    movie_temp(:,:,1) = TP.D.Vol.Frame{1};
 end
 
 % progress bar
@@ -814,34 +805,26 @@ for i = 2:TP.EX.D.CurFileVlmeMax % start from 2nd frame
         setTag(TP.EX.D.CurTiffObj,tagTemp)
         write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); 
 
-    elseif option == 2
+    else
     % option 2: use self-defined class based on ScanImage
         appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
-        
-    else 
-    % option 3: use saveastiff.m, save all frames in a temporary matrix
-    movie_temp(:,:,i) = TP.D.Vol.Frame{1};
 
     end
     
-% progress bar updated every 100 frames
-if mod(i,100) == 0
-    waitbar(...
-    i/TP.EX.D.CurFileVlmeMax,...
-    TP.EX.UI.H0.hWaitBar,...
-    ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
-    num2str(i), ' finished.']);
-end
+    % progress bar updated every 100 frames
+    if mod(i,100) == 0
+        waitbar(...
+        i/TP.EX.D.CurFileVlmeMax,...
+        TP.EX.UI.H0.hWaitBar,...
+        ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
+        num2str(i), ' finished.']);
+    end
 
 end
 
 close(TP.EX.UI.H0.hWaitBar);
-
-if option == 3 % save the whole matrix to tiff file
-    res = saveastiff(uint16(movie_temp), tiffnametemp)
-else
-    close(TP.EX.D.CurTiffObj)
-end   
+close(TP.EX.D.CurTiffObj)
+ 
 disp(['file ', fnametemp(1:15),' saved!']);
 toc
 
@@ -857,8 +840,8 @@ for k = 1:length(TP.EX.Dir.FileListT)
     % set Tiff name
     % TP.EX.Dir.FileList changed to TP.EX.Dir.FileListT in new version of Exporter (5/8/18) by Yueqi 
     set(TP.EX.UI.H0.hFileList, 'value', k); % iterate through different sessions
-%     TP.EX.D.CurFileNum = k;
     SelectFile;
+    
     fnametemp = TP.EX.Dir.FileListT(TP.EX.D.CurFileNum).name;
     tiffnametemp = [TP.EX.Dir.DirSaveString,'\', fnametemp(1:15),'.tif'];
 
@@ -897,7 +880,6 @@ for k = 1:length(TP.EX.Dir.FileListT)
     % ------------------- set the first frame -----------------
     if option == 1    
     % option 1: use MATLAB LibTiff 
-
         TP.EX.D.CurTiffObj = Tiff(tiffnametemp,'w');
         % set required tags
         tagTemp.ImageLength = 653;
@@ -911,18 +893,12 @@ for k = 1:length(TP.EX.Dir.FileListT)
         setTag(TP.EX.D.CurTiffObj,tagTemp);
         write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); 
 
-    elseif option == 2
+    else
     % option 2: use self-defined class based on ScanImage 
-
         % ts = TifFantasia(filename, frameWidth, frameHeight, imageDescription, Property1, Value1, ...)
         % dateTimeTemp = datestr(TP.D.Trl.TimeStampStopped,'yyyy:mm:dd HH:MM:SS');
         TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D);
         appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
-
-    else 
-    % option 3: saveastiff.m 
-        movie_temp = zeros(653,652,TP.EX.D.CurFileVlmeMax);
-        movie_temp(:,:,1) = TP.D.Vol.Frame{1};
     end
 
     % progress bar
@@ -941,40 +917,27 @@ for k = 1:length(TP.EX.Dir.FileListT)
 
         if option == 1
         % option 1: use MATLAB LibTiff 
-
             writeDirectory(TP.EX.D.CurTiffObj);
             setTag(TP.EX.D.CurTiffObj,tagTemp)
             write(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1}); 
-
-        elseif option == 2
+        else
         % option 2: use self-defined class based on ScanImage
             appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
-
-        else 
-        % option 3: use saveastiff.m, save all frames in a temporary matrix
-        movie_temp(:,:,i) = TP.D.Vol.Frame{1};
-
         end
 
-    % progress bar updated every 100 frames
-    if mod(i,100) == 0
-        waitbar(...
-        i/TP.EX.D.CurFileVlmeMax,...
-        TP.EX.UI.H0.hWaitBar,...
-        ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
-        num2str(i), ' finished.']);
-    end
-
+        % progress bar updated every 100 frames
+        if mod(i,100) == 0
+            waitbar(...
+            i/TP.EX.D.CurFileVlmeMax,...
+            TP.EX.UI.H0.hWaitBar,...
+            ['Totally ', num2str(TP.EX.D.CurFileVlmeMax), ' frames, ',...
+            num2str(i), ' finished.']);
+        end
     end
 
     close(TP.EX.UI.H0.hWaitBar);
-    
-
-    if option == 3 % save the whole matrix to tiff file
-        res = saveastiff(uint16(movie_temp), tiffnametemp)
-    else
-        close(TP.EX.D.CurTiffObj)
-    end   
+    close(TP.EX.D.CurTiffObj)
+ 
     disp(['file ', fnametemp(1:15),' saved!']);
     toc
     
