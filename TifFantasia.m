@@ -27,6 +27,7 @@ classdef TifFantasia < handle
     %% CREDITS
     %   Created 8/16/08 by Vijay Iyer, 
     %   Changed to new style class on 9/28/10 by Jinyang Liu
+    %   Modified by Yueqi 2016
     %% *************************************
     
     properties

@@ -781,7 +781,6 @@ else
     % dateTimeTemp = datestr(TP.D.Trl.TimeStampStopped,'yyyy:mm:dd HH:MM:SS');
     TP.EX.D.CurTiffObj = TifFantasia(tiffnametemp,652,653,TP.D);
     appendFrame(TP.EX.D.CurTiffObj,TP.D.Vol.Frame{1});
-    
 end
 
 % progress bar
