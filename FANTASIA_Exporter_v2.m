@@ -1,4 +1,4 @@
-function varargout = FANTASIA_Exporter(varargin)
+function varargout = FANTASIA_Exporter_v2(varargin)
 % Flexible And Nimble Two-photon AOD Scanning In vivo imAging
 % The Exporter code for exporting raw data into TIFF pictures or videos
 % This is the Verision 5.1:
